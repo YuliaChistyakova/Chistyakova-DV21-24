@@ -1,6 +1,7 @@
 rm()
-setwd("C:/Modinf/Zadanie1")
+setwd("C:/Modinf/Yaroslav")
 # Импортируем необходимые библиотеки
+#install.packages()
 library(tidyverse)
 library(stats)
 
@@ -11,10 +12,16 @@ data <- read.csv("greendb.csv")
 sосna_data <- data %>% filter(adm_region == "район Орехово-Борисово Северное",species_ru == "Сосна обыкновенная")
 listvenica_data <- data %>% filter(adm_region == "район Орехово-Борисово Северное",species_ru == "Лиственница европейская")
 
-# Считаем средние и сравниваем
-mean_socna=mean(sосna_data$d_trunk_m)
-mean_socna
-mean_listv=mean(listvenica_data$d_trunk_m)
-mean_listv
+#Удалим лишние столбцы и объединим таблицы
+sосna_data <- sосna_data[,-3]
+listvenica_data <- listvenica_data[,-3]
+sосna_data <- sосna_data[,-5]
+listvenica_data <- listvenica_data[,-5]
+derevo <- rbind(listvenica_data,sосna_data)
 
-
+derevo.aov <- aov(d_trunk_m ~ species_ru, data = derevo)
+summary(derevo)
+derevo_resid <- residuals(object = derevo.aov)
+shapiro.test(x = derevo_resid)
+summary(derevo.aov)
+anova(derevo.aov)
