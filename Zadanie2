@@ -12,6 +12,34 @@ lipa = data %>% group_by(adm_region, Genus)
            summarise(N = n()) %>%
            filter(Genus == "lipa") 
 
+map = sf::read_sf("moscow.geojson") 
+
+map = map %>% mutate(adm_region = NAME_RU)
+map = left_join(map, lipa, by="adm_region") 
+map = map %>% mutate(lipa_cat = case_when( 
+   N > 15000 ~ ">15000", 
+   N > 10000 ~ ">10000", 
+   N > 5000 ~ ">5000", 
+   N > 2500 ~ ">2500", 
+   N > 1000 ~ ">1000", 
+   N > 500 ~ ">500", 
+   N > 100 ~ ">100", 
+   N > 0 ~ "<100"
+) ) 
+
+map = map %>% mutate(lipa_cat = factor(lipa_cat)) 
+plot(map) 
+ggplot(map)+
+ geom_sf(aes(fill=NAME))+
+ theme(legend.position = "none") 
+
+ggplot(map %>% filter(N<7500))+
+ geom_sf(aes(fill=N))+
+ theme_classic() 
+
+ggplot(map)+
+ geom_sf(aes(fill=lipa_cat))+
+ theme_bw() 
 
 
 
