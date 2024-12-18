@@ -1,0 +1,17 @@
+library(dplyr)
+library(sf) 
+library(reader) 
+library(ggplot2) 
+library(tidyr) 
+greendb = read_csv("greendb.csv") 
+spec = greendb$species_ru
+genus = stringer::str_split(spec, pattern = " ", simplify = T)[,1]
+
+data = greendb %>% mutate(Genus = genus)
+lipa = data %>% group_by(adm_region, Genus) 
+           summarise(N = n()) %>%
+           filter(Genus == "lipa") 
+
+
+
+
