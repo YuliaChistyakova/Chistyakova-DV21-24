@@ -1,45 +1,42 @@
+
+#Задание 2. Чистякова
+#постройте картосхему плотности деревьев (штук на км2) 
+#родов Лиственница и Сосна
+rm(list=ls())
+library(sf)
+library(ggplot2)
 library(dplyr)
-library(sf) 
-library(reader) 
-library(ggplot2) 
-library(tidyr) 
-greendb = read_csv("greendb.csv") 
+library(tidyr)
+
+setwd("C:/Modinf/modeling")
+greendb = read.csv("greendb.csv")
+map = sf::read_sf("moscow.geojson.txt")
+
+# Извлечение информации о роде
 spec = greendb$species_ru
-genus = stringer::str_split(spec, pattern = " ", simplify = T)[,1]
+genus = stringr::str_split(spec, pattern=" ", simplify=T)[,1]
+greendb = greendb %>% mutate(Genus = genus)
 
-data = greendb %>% mutate(Genus = genus)
-lipa = data %>% group_by(adm_region, Genus) 
-           summarise(N = n()) %>%
-           filter(Genus == "lipa") 
+# Расчет плотности деревьев по административным районам и родам
+tree_density = greendb %>%
+  group_by(adm_region, Genus) %>%
+  summarise(density = greendb$objectid / sf::st_area(map[map$NAME == adm_region,]) * 1000000, # деревьев на км²
+            .groups = 'drop')
 
-map = sf::read_sf("moscow.geojson") 
+# Фильтрация для родов Лиственница и Сосна
+tree_density = tree_density[tree_density$Genus %in% c("Лиственница", "Сосна"),]
 
-map = map %>% mutate(adm_region = NAME_RU)
-map = left_join(map, lipa, by="adm_region") 
-map = map %>% mutate(lipa_cat = case_when( 
-   N > 15000 ~ ">15000", 
-   N > 10000 ~ ">10000", 
-   N > 5000 ~ ">5000", 
-   N > 2500 ~ ">2500", 
-   N > 1000 ~ ">1000", 
-   N > 500 ~ ">500", 
-   N > 100 ~ ">100", 
-   N > 0 ~ "<100"
-) ) 
+# Объединение пространственных данных с плотностью деревьев
+map = map %>% mutate(adm_region = NAME)
+map = left_join(map, tree_density, by = "adm_region")
 
-map = map %>% mutate(lipa_cat = factor(lipa_cat)) 
-plot(map) 
-ggplot(map)+
- geom_sf(aes(fill=NAME))+
- theme(legend.position = "none") 
+# Визуализация плотности деревьев Лиственницы
+ggplot(map) +
+  geom_sf(aes(fill = density[Genus == "Лиственница"])) +
+  labs(title = "Плотность деревьев Лиственницы", fill = "Деревьев на км²")
 
-ggplot(map %>% filter(N<7500))+
- geom_sf(aes(fill=N))+
- theme_classic() 
-
-ggplot(map)+
- geom_sf(aes(fill=lipa_cat))+
- theme_bw() 
-
-
+# Визуализация плотности деревьев Сосны
+ggplot(map) +
+  geom_sf(aes(fill = density[Genus == "Сосна"])) +
+  labs(title = "Плотность деревьев Сосны", fill = "Деревьев на км²")
 
