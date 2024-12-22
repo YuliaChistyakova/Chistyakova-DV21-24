@@ -1,27 +1,26 @@
-rm()
-setwd("C:/Modinf/Yaroslav")
+#Задание 1. Чистякова
+#для района Орехово-Борисово Северное докажите что 
+#диаметр стволов родов Лиственница и Сосна значимо отличаются.
+rm(list=ls())
+setwd("C:/Modinf/modeling")
 # Импортируем необходимые библиотеки
 #install.packages()
 library(tidyverse)
 library(stats)
 
 # Загружаем данные из таблицы
-data <- read.csv("greendb.csv")
+derev <- read.csv("greendb.csv")
 
-# Фильтруем данные для деревьев родов Сосна и Лиственица
-sосna_data <- data %>% filter(adm_region == "район Орехово-Борисово Северное",species_ru == "Сосна обыкновенная")
-listvenica_data <- data %>% filter(adm_region == "район Орехово-Борисово Северное",species_ru == "Лиственница европейская")
+spec=derev$species_ru
+genus=stringr::str_split(spec, pattern=" ",simplify=T)[,1]
+derevo=derev%>%mutate(Genus=genus)
 
-#Удалим лишние столбцы и объединим таблицы
-sосna_data <- sосna_data[,-3]
-listvenica_data <- listvenica_data[,-3]
-sосna_data <- sосna_data[,-5]
-listvenica_data <- listvenica_data[,-5]
-derevo <- rbind(listvenica_data,sосna_data)
+derevo=derevo%>%filter(Genus%in% c("Лиственница","Сосна")) %>%
+  filter(adm_region=="район Орехово-Борисово Северное")
 
-derevo.aov <- aov(d_trunk_m ~ species_ru, data = derevo)
-summary(derevo)
-derevo_resid <- residuals(object = derevo.aov)
-shapiro.test(x = derevo_resid)
+derev$Genus%>%unique()
+derev$adm_region%>%unique()
+
+derevo.aov <- aov(d_trunk_m ~ Genus, data = derevo)
 summary(derevo.aov)
-anova(derevo.aov)
+# нет значимых различий между высотами.т.к. p>0,05 принимаем Но
