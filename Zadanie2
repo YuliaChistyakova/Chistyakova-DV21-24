@@ -12,19 +12,20 @@ setwd("C:/Modinf/modeling")
 greendb = read.csv("greendb.csv")
 map = sf::read_sf("moscow.geojson.txt")
 
+# Строим график с заливкой
+ggplot(map) + geom_sf(aes(fill = NAME)) + theme(legend.position = 'none')
+
 # Извлечение информации о роде
 spec = greendb$species_ru
 genus = stringr::str_split(spec, pattern=" ", simplify=T)[,1]
-greendb = greendb %>% mutate(Genus = genus)
+data = greendb %>% mutate(Genus = genus)
 
 # Расчет плотности деревьев по административным районам и родам
-tree_density = greendb %>%
-  group_by(adm_region, Genus) %>%
+tree_density = greendb %>% group_by(adm_region, Genus) %>%
   summarise(density = greendb$objectid / sf::st_area(map[map$NAME == adm_region,]) * 1000000, # деревьев на км²
-            .groups = 'drop')
+            .groups = 'drop') %>% filter(Genus %in% c("Лиственница", "Сосна"))
 
-# Фильтрация для родов Лиственница и Сосна
-tree_density = tree_density[tree_density$Genus %in% c("Лиственница", "Сосна"),]
+data = pivot_wider(data, names_from = Genus, values_from = density)
 
 # Объединение пространственных данных с плотностью деревьев
 map = map %>% mutate(adm_region = NAME)
