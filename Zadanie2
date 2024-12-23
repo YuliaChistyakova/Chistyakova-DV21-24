@@ -21,23 +21,22 @@ genus = stringr::str_split(spec, pattern=" ", simplify=T)[,1]
 data = greendb %>% mutate(Genus = genus)
 
 # Расчет плотности деревьев по административным районам и родам
-tree_density = greendb %>% group_by(adm_region, Genus) %>%
-  summarise(density = greendb$objectid / sf::st_area(map[map$NAME == adm_region,]) * 1000000, # деревьев на км²
-            .groups = 'drop') %>% filter(Genus %in% c("Лиственница", "Сосна"))
-
-data = pivot_wider(data, names_from = Genus, values_from = density)
-
-# Объединение пространственных данных с плотностью деревьев
-map = map %>% mutate(adm_region = NAME)
-map = left_join(map, tree_density, by = "adm_region")
-
-# Визуализация плотности деревьев Лиственницы
-ggplot(map) +
-  geom_sf(aes(fill = density[Genus == "Лиственница"])) +
-  labs(title = "Плотность деревьев Лиственницы", fill = "Деревьев на км²")
-
-# Визуализация плотности деревьев Сосны
-ggplot(map) +
-  geom_sf(aes(fill = density[Genus == "Сосна"])) +
-  labs(title = "Плотность деревьев Сосны", fill = "Деревьев на км²")
-
+tree_density = data %>% group_by(adm_region, Genus) %>%
+  filter(Genus %in% c("Лиственница", "Сосна") %>%
+           summarise(count = n(), .groups = 'drop')
+         
+         # Объединение пространственных данных с плотностью деревьев
+         map = map %>% mutate(adm_region = NAME)
+         map <- map1 %>%
+           mutate(area_km2 = st_area(geometry) / 1e6)  # Преобразование площади в км²
+         
+         tree_density=pivot_wider(tree_density, names_from = Genus, values_from = count)
+         
+         map=left_join(map,tree_density , by="adm_region")
+         
+         ggplot(map)+
+           geom_sf(aes(fill=`Лиственница`))+theme()
+         
+         ggplot(map)+
+           geom_sf(aes(fill=`Сосна`))+theme()
+         
